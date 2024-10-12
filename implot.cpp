@@ -2781,8 +2781,10 @@ void EndPlot() {
 
     // If no overlapped item have grabbed the input, grab them for
     // next frame
-    if (plot.Hovered && ImGui::IsAnyMouseDown() && !ImGui::IsAnyItemActive())
+    if (plot.Hovered && ImGui::IsAnyMouseDown() && !ImGui::IsAnyItemActive()) {
         ImGui::SetActiveID(plot.ID, Window);
+        ImGui::SetHoveredID(plot.ID);
+    }
 
     // FINAL RENDER -----------------------------------------------------------
 
