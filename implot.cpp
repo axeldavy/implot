@@ -1844,6 +1844,9 @@ bool UpdateInput(ImPlotPlot& plot) {
                                              | plot_button_flags;
 
     const bool plot_clicked = ImGui::ButtonBehavior(plot.PlotRect,plot.ID,&plot.Hovered,&plot.Held,plot_button_flags);
+    // Allow plot to be considered Hovered and handle mouse wheel if overlapped
+    // By items belonging to the plot
+    plot.Hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem);
 #if (IMGUI_VERSION_NUM < 18966)
     ImGui::SetItemAllowOverlap(); // Handled by ButtonBehavior()
 #endif
