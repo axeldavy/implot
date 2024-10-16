@@ -2779,13 +2779,6 @@ void EndPlot() {
     ImDrawList & DrawList = *Window->DrawList;
     const ImGuiIO &   IO  = ImGui::GetIO();
 
-    // If no overlapped item have grabbed the input, grab them for
-    // next frame
-    if (plot.Hovered && ImGui::IsAnyMouseDown() && !ImGui::IsAnyItemActive()) {
-        ImGui::SetActiveID(plot.ID, Window);
-        ImGui::SetHoveredID(plot.ID);
-    }
-
     // FINAL RENDER -----------------------------------------------------------
 
     const bool render_border  = gp.Style.PlotBorderSize > 0 && GetStyleColorVec4(ImPlotCol_PlotBorder).w > 0;
@@ -3247,6 +3240,13 @@ void EndPlot() {
     for (int i = 0; i < ImAxis_COUNT; ++i)
         plot.Axes[i].PushLinks();
 
+
+    // If no overlapped item have grabbed the input, grab them for
+    // next frame
+    if (plot.Hovered && ImGui::IsAnyMouseDown() && !ImGui::IsAnyItemActive()) {
+        ImGui::SetActiveID(plot.ID, Window);
+        ImGui::SetHoveredID(plot.ID);
+    }
 
     // CLEANUP ----------------------------------------------------------------
 
