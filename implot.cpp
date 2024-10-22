@@ -1846,7 +1846,7 @@ bool UpdateInput(ImPlotPlot& plot) {
     const bool plot_clicked = ImGui::ButtonBehavior(plot.PlotRect,plot.ID,&plot.Hovered,&plot.Held,plot_button_flags);
     // Allow plot to be considered Hovered and handle mouse wheel if overlapped
     // By items belonging to the plot
-    plot.Hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem);
+    const bool plot_Hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem);
 #if (IMGUI_VERSION_NUM < 18966)
     ImGui::SetItemAllowOverlap(); // Handled by ButtonBehavior()
 #endif
@@ -1884,7 +1884,7 @@ bool UpdateInput(ImPlotPlot& plot) {
             if (x_click[i] && IO.MouseDoubleClicked[gp.InputMap.Fit])
                 plot.FitThisFrame = xax.FitThisFrame = true;
             xax.Held  = xax.Held && can_pan;
-            x_hov[i]  = xax.Hovered || plot.Hovered;
+            x_hov[i]  = xax.Hovered || plot_Hovered;
             x_held[i] = xax.Held    || plot.Held;
         }
     }
@@ -1897,7 +1897,7 @@ bool UpdateInput(ImPlotPlot& plot) {
             if (y_click[i] && IO.MouseDoubleClicked[gp.InputMap.Fit])
                 plot.FitThisFrame = yax.FitThisFrame = true;
             yax.Held  = yax.Held && can_pan;
-            y_hov[i]  = yax.Hovered || plot.Hovered;
+            y_hov[i]  = yax.Hovered || plot_Hovered;
             y_held[i] = yax.Held    || plot.Held;
         }
     }
@@ -1910,9 +1910,9 @@ bool UpdateInput(ImPlotPlot& plot) {
 
     const bool axis_equal      = ImHasFlag(plot.Flags, ImPlotFlags_Equal);
 
-    const bool any_x_hov       = plot.Hovered || AnyAxesHovered(&plot.Axes[ImAxis_X1], IMPLOT_NUM_X_AXES);
+    const bool any_x_hov       = plot_Hovered || AnyAxesHovered(&plot.Axes[ImAxis_X1], IMPLOT_NUM_X_AXES);
     const bool any_x_held      = plot.Held    || AnyAxesHeld(&plot.Axes[ImAxis_X1], IMPLOT_NUM_X_AXES);
-    const bool any_y_hov       = plot.Hovered || AnyAxesHovered(&plot.Axes[ImAxis_Y1], IMPLOT_NUM_Y_AXES);
+    const bool any_y_hov       = plot_Hovered || AnyAxesHovered(&plot.Axes[ImAxis_Y1], IMPLOT_NUM_Y_AXES);
     const bool any_y_held      = plot.Held    || AnyAxesHeld(&plot.Axes[ImAxis_Y1], IMPLOT_NUM_Y_AXES);
     const bool any_hov         = any_x_hov    || any_y_hov;
     const bool any_held        = any_x_held   || any_y_held;
@@ -2000,7 +2000,7 @@ bool UpdateInput(ImPlotPlot& plot) {
             if (x_hov[i] && !x_axis.IsInputLocked() && !equal_locked) {
                 ImGui::SetKeyOwner(ImGuiKey_MouseWheelY, plot.ID);
                 if (zoom_rate != 0.0f) {
-                    float correction = (plot.Hovered && equal_zoom) ? 0.5f : 1.0f;
+                    float correction = (plot_Hovered && equal_zoom) ? 0.5f : 1.0f;
                     const double plot_l = x_axis.PixelsToPlot(plot.PlotRect.Min.x - rect_size.x * tx * zoom_rate * correction);
                     const double plot_r = x_axis.PixelsToPlot(plot.PlotRect.Max.x + rect_size.x * (1 - tx) * zoom_rate * correction);
                     x_axis.SetMin(x_axis.IsInverted() ? plot_r : plot_l);
@@ -2018,7 +2018,7 @@ bool UpdateInput(ImPlotPlot& plot) {
             if (y_hov[i] && !y_axis.IsInputLocked() && !equal_locked) {
                 ImGui::SetKeyOwner(ImGuiKey_MouseWheelY, plot.ID);
                 if (zoom_rate != 0.0f) {
-                    float correction = (plot.Hovered && equal_zoom) ? 0.5f : 1.0f;
+                    float correction = (plot_Hovered && equal_zoom) ? 0.5f : 1.0f;
                     const double plot_t = y_axis.PixelsToPlot(plot.PlotRect.Min.y - rect_size.y * ty * zoom_rate * correction);
                     const double plot_b = y_axis.PixelsToPlot(plot.PlotRect.Max.y + rect_size.y * (1 - ty) * zoom_rate * correction);
                     y_axis.SetMin(y_axis.IsInverted() ? plot_t : plot_b);
