@@ -4467,6 +4467,34 @@ void PushStyleVar(ImPlotStyleVar idx, const ImVec2& val)
     IM_ASSERT(0 && "Called PushStyleVar() ImVec2 variant but variable is not a ImVec2!");
 }
 
+void PushStyleVarX(ImPlotStyleVar idx, float val_x)
+{
+    ImPlotContext& gp = *GImPlot;
+    const ImPlotStyleVarInfo* var_info = GetPlotStyleVarInfo(idx);
+    if (var_info->Type != ImGuiDataType_Float || var_info->Count != 2)
+    {
+        IM_ASSERT_USER_ERROR(0, "Calling PushStyleVar() variant with wrong type!");
+        return;
+    }
+    ImVec2* pvar = (ImVec2*)var_info->GetVarPtr(&gp.Style);
+    gp.StyleModifiers.push_back(ImGuiStyleMod((ImGuiStyleVar)idx, *pvar));
+    pvar->x = val_x;
+}
+
+void PushStyleVarY(ImPlotStyleVar idx, float val_y)
+{
+    ImPlotContext& gp = *GImPlot;
+    const ImPlotStyleVarInfo* var_info = GetPlotStyleVarInfo(idx);
+    if (var_info->Type != ImGuiDataType_Float || var_info->Count != 2)
+    {
+        IM_ASSERT_USER_ERROR(0, "Calling PushStyleVar() variant with wrong type!");
+        return;
+    }
+    ImVec2* pvar = (ImVec2*)var_info->GetVarPtr(&gp.Style);
+    gp.StyleModifiers.push_back(ImGuiStyleMod((ImGuiStyleVar)idx, *pvar));
+    pvar->y = val_y;
+}
+
 void PopStyleVar(int count) {
     ImPlotContext& gp = *GImPlot;
     IM_ASSERT_USER_ERROR(count <= gp.StyleModifiers.Size, "You can't pop more modifiers than have been pushed!");

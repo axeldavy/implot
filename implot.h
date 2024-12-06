@@ -1106,6 +1106,8 @@ IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, float val);
 IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, int val);
 // Temporarily modify a style variable of ImVec2 type. Don't forget to call PopStyleVar!
 IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, const ImVec2& val);
+IMPLOT_API void PushStyleVarX(ImPlotStyleVar idx, float val_x);
+IMPLOT_API void PushStyleVarY(ImPlotStyleVar idx, float val_y);
 // Undo temporary style variable modification(s). Undo multiple pushes at once by increasing count.
 IMPLOT_API void PopStyleVar(int count = 1);
 
