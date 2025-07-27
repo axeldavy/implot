@@ -1845,8 +1845,8 @@ bool UpdateInput(ImPlotPlot& plot) {
 
     const bool plot_clicked = ImGui::ButtonBehavior(plot.PlotRect,plot.ID,&plot.Hovered,&plot.Held,plot_button_flags);
     // Allow plot to be considered Hovered and handle mouse wheel if overlapped
-    // By items belonging to the plot
-    const bool plot_Hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem);
+    // By items belonging to the plot, except for axes
+    bool plot_Hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem);
 #if (IMGUI_VERSION_NUM < 18966)
     ImGui::SetItemAllowOverlap(); // Handled by ButtonBehavior()
 #endif
@@ -1884,7 +1884,7 @@ bool UpdateInput(ImPlotPlot& plot) {
             if (x_click[i] && IO.MouseDoubleClicked[gp.InputMap.Fit])
                 plot.FitThisFrame = xax.FitThisFrame = true;
             xax.Held  = xax.Held && can_pan;
-            x_hov[i]  = xax.Hovered || plot_Hovered;
+            x_hov[i]  = xax.Hovered;
             x_held[i] = xax.Held    || plot.Held;
         }
     }
@@ -1897,10 +1897,21 @@ bool UpdateInput(ImPlotPlot& plot) {
             if (y_click[i] && IO.MouseDoubleClicked[gp.InputMap.Fit])
                 plot.FitThisFrame = yax.FitThisFrame = true;
             yax.Held  = yax.Held && can_pan;
-            y_hov[i]  = yax.Hovered || plot_Hovered;
+            y_hov[i]  = yax.Hovered;
             y_held[i] = yax.Held    || plot.Held;
         }
     }
+
+    // plot hovered is blocked if an axis is hovered instead
+    for (int i = 0; i < IMPLOT_NUM_X_AXES; ++i)
+        plot_Hovered = plot_Hovered && !x_hov[i];
+    for (int i = 0; i < IMPLOT_NUM_Y_AXES; ++i)
+        plot_Hovered = plot_Hovered && !y_hov[i];
+    // axes are considered hovered if plot hovered is true
+    for (int i = 0; i < IMPLOT_NUM_X_AXES; ++i)
+        x_hov[i] |= plot_Hovered;
+    for (int i = 0; i < IMPLOT_NUM_Y_AXES; ++i)
+        y_hov[i] |= plot_Hovered;
 
     // cancel due to DND activity
     if (GImGui->DragDropActive || (IO.KeyMods == gp.InputMap.OverrideMod && gp.InputMap.OverrideMod != 0))
