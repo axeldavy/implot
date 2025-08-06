@@ -742,6 +742,8 @@ IMPLOT_API void SetupAxisFormat(ImAxis axis, ImPlotFormatter formatter, void* da
 IMPLOT_API void SetupAxisTicks(ImAxis axis, const double* values, int n_ticks, const char* const labels[]=nullptr, bool keep_default=false);
 // Sets an axis' ticks and optionally the labels for the next plot. To keep the default ticks, set #keep_default=true.
 IMPLOT_API void SetupAxisTicks(ImAxis axis, double v_min, double v_max, int n_ticks, const char* const labels[]=nullptr, bool keep_default=false);
+// Append a custom tick
+IMPLOT_API void SetupAxisAddTick(ImAxis idx, const double value, const char* label, bool major_tick);
 // Sets an axis' scale using built-in options.
 IMPLOT_API void SetupAxisScale(ImAxis axis, ImPlotScale scale);
 // Sets an axis' scale using user supplied forward and inverse transfroms.
