@@ -726,7 +726,7 @@ void Locator_Default(ImPlotTicker& ticker, const ImPlotRange& range, float pixel
     ImVec2 total_size(0,0);
     for (double major = graphmin; major < graphmax + 0.5 * interval; major += interval) {
         // is this zero? combat zero formatting issues
-        if (major-interval < 0 && major+interval > 0)
+        if (fabs(major) < 0.5 * interval)
             major = 0;
         if (range.Contains(major)) {
             if (!first_major_set) {
