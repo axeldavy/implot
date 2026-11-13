@@ -1843,6 +1843,10 @@ bool UpdateInput(ImPlotPlot& plot) {
     const ImGuiButtonFlags axis_button_flags = ImGuiButtonFlags_FlattenChildren
                                              | plot_button_flags;
 
+    const ImGuiID active_before = GImGui->ActiveId;
+    const bool pan_released = IO.MouseReleased[gp.InputMap.Pan]
+                           && GImGui->ActiveIdMouseButton == gp.InputMap.Pan
+                           && ImHasFlag(IO.KeyMods, gp.InputMap.PanMod);
     const bool plot_clicked = ImGui::ButtonBehavior(plot.PlotRect,plot.ID,&plot.Hovered,&plot.Held,plot_button_flags);
     // Allow plot to be considered Hovered and handle mouse wheel if overlapped
     // By items belonging to the plot, except for axes
@@ -1919,6 +1923,11 @@ bool UpdateInput(ImPlotPlot& plot) {
 
     // STATE -------------------------------------------------------------------
 
+    const bool released_plot = pan_released && active_before == plot.ID;
+    bool released_pan_owner = released_plot;
+    for (int i = 0; i < ImAxis_COUNT; ++i)
+        released_pan_owner |= pan_released && plot.Axes[i].Enabled && active_before == plot.Axes[i].ID;
+
     const bool axis_equal      = ImHasFlag(plot.Flags, ImPlotFlags_Equal);
 
     const bool any_x_hov       = plot_Hovered || AnyAxesHovered(&plot.Axes[ImAxis_X1], IMPLOT_NUM_X_AXES);
@@ -1933,11 +1942,11 @@ bool UpdateInput(ImPlotPlot& plot) {
     const float select_drag_sq = ImLengthSqr(select_drag);
     const float pan_drag_sq    = ImLengthSqr(pan_drag);
     const bool selecting       = plot.Selecting && select_drag_sq > MOUSE_CURSOR_DRAG_THRESHOLD;
-    const bool panning         = any_held       && pan_drag_sq    > MOUSE_CURSOR_DRAG_THRESHOLD;
+    const bool panning         = (any_held || released_pan_owner) && pan_drag_sq > MOUSE_CURSOR_DRAG_THRESHOLD;
 
     // CONTEXT MENU -----------------------------------------------------------
 
-    if (IO.MouseReleased[gp.InputMap.Menu] && !plot.ContextLocked)
+    if (IO.MouseReleased[gp.InputMap.Menu] && !plot.ContextLocked && !panning)
         gp.OpenContextThisFrame = true;
 
     if (selecting || panning)
@@ -1947,16 +1956,21 @@ bool UpdateInput(ImPlotPlot& plot) {
 
     // DRAG INPUT -------------------------------------------------------------
 
-    if (any_held && !plot.Selecting) {
+    const ImVec2 pan_delta = IO.MouseClicked[gp.InputMap.Pan]
+                           ? (ImGui::IsMousePosValid(&IO.MousePos) && ImGui::IsMousePosValid(&IO.MouseClickedPos[gp.InputMap.Pan])
+                              ? IO.MousePos - IO.MouseClickedPos[gp.InputMap.Pan] : ImVec2(0, 0))
+                           : IO.MouseDelta;
+    if ((any_held || pan_released) && !plot.Selecting) {
         int drag_direction = 0;
         for (int i = 0; i < IMPLOT_NUM_X_AXES; i++) {
             ImPlotAxis& x_axis = plot.XAxis(i);
-            if (x_held[i] && !x_axis.IsInputLocked()) {
+            const bool pan_axis = x_held[i] || (x_axis.Enabled && (released_plot || (pan_released && active_before == x_axis.ID)));
+            if (pan_axis && !x_axis.IsInputLocked()) {
                 drag_direction |= (1 << 1);
-                bool increasing = x_axis.IsInverted() ? IO.MouseDelta.x > 0 : IO.MouseDelta.x < 0;
-                if (IO.MouseDelta.x != 0 && !x_axis.IsPanLocked(increasing)) {
-                    const double plot_l = x_axis.PixelsToPlot(plot.PlotRect.Min.x - IO.MouseDelta.x);
-                    const double plot_r = x_axis.PixelsToPlot(plot.PlotRect.Max.x - IO.MouseDelta.x);
+                bool increasing = x_axis.IsInverted() ? pan_delta.x > 0 : pan_delta.x < 0;
+                if (pan_delta.x != 0 && !x_axis.IsPanLocked(increasing)) {
+                    const double plot_l = x_axis.PixelsToPlot(plot.PlotRect.Min.x - pan_delta.x);
+                    const double plot_r = x_axis.PixelsToPlot(plot.PlotRect.Max.x - pan_delta.x);
                     x_axis.SetMin(x_axis.IsInverted() ? plot_r : plot_l);
                     x_axis.SetMax(x_axis.IsInverted() ? plot_l : plot_r);
                     if (axis_equal && x_axis.OrthoAxis != nullptr)
@@ -1967,12 +1981,13 @@ bool UpdateInput(ImPlotPlot& plot) {
         }
         for (int i = 0; i < IMPLOT_NUM_Y_AXES; i++) {
             ImPlotAxis& y_axis = plot.YAxis(i);
-            if (y_held[i] && !y_axis.IsInputLocked()) {
+            const bool pan_axis = y_held[i] || (y_axis.Enabled && (released_plot || (pan_released && active_before == y_axis.ID)));
+            if (pan_axis && !y_axis.IsInputLocked()) {
                 drag_direction |= (1 << 2);
-                bool increasing = y_axis.IsInverted() ? IO.MouseDelta.y < 0 : IO.MouseDelta.y > 0;
-                if (IO.MouseDelta.y != 0 && !y_axis.IsPanLocked(increasing)) {
-                    const double plot_t = y_axis.PixelsToPlot(plot.PlotRect.Min.y - IO.MouseDelta.y);
-                    const double plot_b = y_axis.PixelsToPlot(plot.PlotRect.Max.y - IO.MouseDelta.y);
+                bool increasing = y_axis.IsInverted() ? pan_delta.y < 0 : pan_delta.y > 0;
+                if (pan_delta.y != 0 && !y_axis.IsPanLocked(increasing)) {
+                    const double plot_t = y_axis.PixelsToPlot(plot.PlotRect.Min.y - pan_delta.y);
+                    const double plot_b = y_axis.PixelsToPlot(plot.PlotRect.Max.y - pan_delta.y);
                     y_axis.SetMin(y_axis.IsInverted() ? plot_t : plot_b);
                     y_axis.SetMax(y_axis.IsInverted() ? plot_b : plot_t);
                     if (axis_equal && y_axis.OrthoAxis != nullptr)
@@ -1981,7 +1996,7 @@ bool UpdateInput(ImPlotPlot& plot) {
                 }
             }
         }
-        if (IO.MouseDragMaxDistanceSqr[gp.InputMap.Pan] > MOUSE_CURSOR_DRAG_THRESHOLD) {
+        if (any_held && IO.MouseDragMaxDistanceSqr[gp.InputMap.Pan] > MOUSE_CURSOR_DRAG_THRESHOLD) {
             switch (drag_direction) {
                 case 0        : ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed); break;
                 case (1 << 1) : ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);   break;
